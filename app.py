@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 from tasks import load_tasks, save_tasks, filter_tasks_by_priority, filter_tasks_by_category
+import subprocess
 
 def main():
     st.title("To-Do Application")
@@ -78,6 +79,42 @@ def main():
                 tasks = [t for t in tasks if t["id"] != task["id"]]
                 save_tasks(tasks)
                 st.rerun()
+    # My implementation below
+    if st.button("Run Basic Pytest + Cov"):
+        result = subprocess.run(["pytest", "--cov=tasks", "--cov-report=term-missing", "tests/test_basic.py", "--import-mode=importlib"], capture_output=True, text=True)
+        st.text("Test Output: (Note: this has 100 percent coverage before adding try/except blocks\n")
+        st.code(result.stdout + result.stderr)
+
+
+        
+    if st.button("Run Parameterization Tests"):
+        result = subprocess.run(
+            ["pytest", "tests/test_advanced.py", "-k", "test_filter_tasks_by_priority_param", "--import-mode=importlib"],
+            capture_output=True, text=True
+        )
+        st.text("Parameterization Test Output:\n")
+        st.code(result.stdout + result.stderr)
+
+    # Button for running mocking tests
+    if st.button("Run Mocking Tests"):
+        result = subprocess.run(
+            ["pytest", "tests/test_advanced.py", "-k", "test_get_overdue_tasks_with_mocked_date", "--import-mode=importlib"],
+            capture_output=True, text=True
+        )
+        st.text("Mocking Test Output:\n")
+        st.code(result.stdout + result.stderr)
+
+
+    
+    if st.button("Run Basic Tests with HTML Report"):
+        result = subprocess.run(
+            ["pytest", "tests/test_basic.py", "--html=report.html", "--import-mode=importlib"],
+            capture_output=True, text=True
+        )
+        st.text("Test Output with HTML Report:\n")
+        st.code(result.stdout + result.stderr)
+        st.text("HTML report saved as report.html.")
+
 
 if __name__ == "__main__":
     main()

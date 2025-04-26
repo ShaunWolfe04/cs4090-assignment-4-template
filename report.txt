@@ -1,0 +1,6 @@
+Initial obervations:
+First thing I did was delete all the old tasks and I made my own. In the process of making tasks, I did not find any bugs, so that's good.
+The filtering also seems to work pretty well, both the filter by category worked, and the filter by priority worked as well.
+
+In fact, I could not find a single bug. The only thing I notices is that there were certain things in the tasks.py file that were not implemented into the streamlit file.
+

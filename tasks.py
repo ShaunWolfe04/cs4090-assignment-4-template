@@ -28,40 +28,63 @@ def load_tasks(file_path=DEFAULT_TASKS_FILE):
 def save_tasks(tasks, file_path=DEFAULT_TASKS_FILE):
     """
     Save tasks to a JSON file.
-    
+
     Args:
         tasks (list): List of task dictionaries
         file_path (str): Path to save the JSON file
     """
-    with open(file_path, "w") as f:
-        json.dump(tasks, f, indent=2)
+    try:
+        with open(file_path, "w") as f:
+            json.dump(tasks, f, indent=2)
+    except (IOError, OSError) as file_error:
+        print(f"Error saving tasks to file: {file_error}")
+    except TypeError as json_error:
+        print(f"Error serializing tasks to JSON: {json_error}")
+    except Exception as e:
+        print(f"Unexpected error in save_tasks: {e}")
+
 
 def generate_unique_id(tasks):
     """
     Generate a unique ID for a new task.
-    
+
     Args:
         tasks (list): List of existing task dictionaries
-        
+
     Returns:
         int: A unique ID for a new task
     """
-    if not tasks:
+    try:
+        if not tasks:
+            return 1
+        return max(task["id"] for task in tasks if isinstance(task.get("id"), int)) + 1
+    except (TypeError, ValueError) as e:
+        print(f"Error generating unique ID: {e}")
         return 1
-    return max(task["id"] for task in tasks) + 1
+    except Exception as e:
+        print(f"Unexpected error in generate_unique_id: {e}")
+        return 1
 
 def filter_tasks_by_priority(tasks, priority):
     """
     Filter tasks by priority level.
-    
+
     Args:
         tasks (list): List of task dictionaries
         priority (str): Priority level to filter by (High, Medium, Low)
-        
+
     Returns:
         list: Filtered list of tasks matching the priority
     """
-    return [task for task in tasks if task.get("priority") == priority]
+    try:
+        return [
+            task for task in tasks 
+            if isinstance(task, dict) and task.get("priority") == priority
+        ]
+    except Exception as e:
+        print(f"Error in filter_tasks_by_priority: {e}")
+        return []
+
 
 def filter_tasks_by_category(tasks, category):
     """
@@ -92,34 +115,59 @@ def filter_tasks_by_completion(tasks, completed=True):
 def search_tasks(tasks, query):
     """
     Search tasks by a text query in title and description.
-    
+
     Args:
         tasks (list): List of task dictionaries
         query (str): Search query
-        
+
     Returns:
         list: Filtered list of tasks matching the search query
     """
-    query = query.lower()
-    return [
-        task for task in tasks 
-        if query in task.get("title", "").lower() or 
-           query in task.get("description", "").lower()
-    ]
+    try:
+        query = query.lower()
+        return [
+            task for task in tasks
+            if isinstance(task, dict) and (
+                query in task.get("title", "").lower() or
+                query in task.get("description", "").lower()
+            )
+        ]
+    except Exception as e:
+        print(f"Error in search_tasks: {e}")
+        return []
+
 
 def get_overdue_tasks(tasks):
     """
     Get tasks that are past their due date and not completed.
-    
+
     Args:
         tasks (list): List of task dictionaries
-        
+
     Returns:
         list: List of overdue tasks
     """
-    today = datetime.now().strftime("%Y-%m-%d")
-    return [
-        task for task in tasks 
-        if not task.get("completed", False) and 
-           task.get("due_date", "") < today
-    ]
+    overdue = []
+    today = datetime.now().date()
+
+    try:
+        for task in tasks:
+            if not isinstance(task, dict):
+                continue
+
+            if task.get("completed", False):
+                continue
+
+            due_date_str = task.get("due_date", "")
+            try:
+                due_date = datetime.strptime(due_date_str, "%Y-%m-%d").date()
+                if due_date < today:
+                    overdue.append(task)
+            except ValueError:
+                # Invalid date format, skip this task
+                continue
+
+        return overdue
+    except Exception as e:
+        print(f"Error in get_overdue_tasks: {e}")
+        return []
